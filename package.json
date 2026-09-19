@@ -1,5 +1,6 @@
 {
   "name": "mood-based-music",
+  "description": "An interactive, retro-editorial web application that generates curated song recommendations based on your mood using the Google Gemini API.",
   "private": true,
   "version": "0.0.0",
   "type": "module",
