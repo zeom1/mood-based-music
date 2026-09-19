@@ -1,24 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { VinylPlayer } from './components/VinylPlayer';
 import { BentoGrid } from './components/BentoGrid';
-import { getRecommendations, SongRecommendation } from './services/gemini';
-import { Music, Key, Loader2, Sparkles } from 'lucide-react';
+import { getRecommendations, type SongRecommendation } from './services/gemini';
+import { Music, Loader2, Sparkles, Moon, Sun } from 'lucide-react';
 
 function App() {
-  const [apiKey, setApiKey] = useState('');
   const [mood, setMood] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [recommendations, setRecommendations] = useState<SongRecommendation[]>([]);
   const [error, setError] = useState('');
+  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check local storage or system preference on initial load
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark' || 
+        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDarkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const handleGenerate = async (selectedMood?: string) => {
     const targetMood = selectedMood || mood;
     if (!targetMood.trim()) {
       setError('Please enter or select a mood.');
-      return;
-    }
-    if (!apiKey.trim()) {
-      setError('Please enter your Gemini API Key at the top.');
       return;
     }
 
@@ -27,30 +42,27 @@ function App() {
     setMood(targetMood);
 
     try {
-      const results = await getRecommendations(targetMood, apiKey);
+      const results = await getRecommendations(targetMood);
       setRecommendations(results);
     } catch (err: any) {
-      setError(err.message || 'Failed to generate recommendations. Please check your API key.');
+      setError(err.message || 'Failed to generate recommendations. Please check your API key in .env file.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-retro-bg flex flex-col font-sans">
-      {/* Top Bar for API Key */}
-      <div className="bg-retro-text text-retro-bg p-3 flex justify-center items-center gap-4 text-sm border-b-4 border-retro-orange">
-        <Key size={16} className="text-retro-yellow" />
-        <input
-          type="password"
-          placeholder="Enter Gemini API Key..."
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          className="bg-transparent border-b border-retro-bg/50 focus:border-retro-yellow outline-none px-2 py-1 w-64 text-center placeholder:text-retro-bg/50 font-mono"
-        />
-      </div>
+    <div className="min-h-screen bg-retro-bg flex flex-col font-sans transition-colors duration-300">
+      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-12 relative">
+        {/* Dark Mode Toggle */}
+        <button 
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className="absolute top-6 right-6 md:top-12 md:right-12 z-10 p-3 rounded-full bg-retro-text text-retro-bg hover:scale-110 transition-transform shadow-brutal"
+          aria-label="Toggle dark mode"
+        >
+          {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+        </button>
 
-      <main className="flex-1 max-w-6xl w-full mx-auto p-6 md:p-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
         {/* Left Column: Editorial Info & Input */}
         <div className="lg:col-span-5 flex flex-col gap-8">
           <header className="space-y-4">
@@ -64,8 +76,8 @@ function App() {
             </p>
           </header>
 
-          <div className="space-y-4 bg-white p-6 border-4 border-retro-text shadow-brutal rounded-xl relative">
-            <div className="absolute -top-3 -right-3 bg-retro-teal text-white p-2 rounded-full border-2 border-retro-text">
+          <div className="space-y-4 bg-retro-surface p-6 border-4 border-retro-text shadow-brutal rounded-xl relative">
+            <div className="absolute -top-3 -right-3 bg-retro-teal text-retro-bg p-2 rounded-full border-2 border-retro-text">
               <Sparkles size={20} />
             </div>
             <label className="block font-serif font-bold text-xl">What's the vibe?</label>
@@ -131,7 +143,7 @@ function App() {
               
               <div className="space-y-4">
                 {recommendations.map((song, idx) => (
-                  <div key={idx} className="group bg-white border-2 border-retro-text p-4 rounded-lg hover:shadow-brutal transition-shadow flex gap-4 items-start">
+                  <div key={idx} className="group bg-retro-surface border-2 border-retro-text p-4 rounded-lg hover:shadow-brutal transition-shadow flex gap-4 items-start">
                     <div className="font-mono font-bold text-retro-orange text-2xl w-8 pt-1">
                       0{idx + 1}
                     </div>

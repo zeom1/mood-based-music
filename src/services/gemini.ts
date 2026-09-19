@@ -8,16 +8,17 @@ export interface SongRecommendation {
   reason: string;
 }
 
-export const getRecommendations = async (mood: string, apiKey: string): Promise<SongRecommendation[]> => {
+export const getRecommendations = async (mood: string): Promise<SongRecommendation[]> => {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (!apiKey) {
-    throw new Error("API key is required");
+    throw new Error("VITE_GEMINI_API_KEY is not set in your .env file");
   }
 
   const ai = new GoogleGenAI({ apiKey });
   
   const prompt = `
-You are a retro music expert DJ. Based on the following user mood, recommend 5 songs. 
-Try to include some vintage or classic tracks if they fit the mood, but modern tracks with a retro feel are also great.
+You are a master DJ and music curator. Based on the following user mood, recommend 5 songs. 
+Mix it up with a good balance of modern hits, hidden gems, and classic tracks that perfectly capture the vibe.
 
 User Mood: "${mood}"
 
